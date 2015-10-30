@@ -1,0 +1,3 @@
+[submodule "itamae"]
+	path = itamae
+	url = https://github.com/qtik/itamae.git
