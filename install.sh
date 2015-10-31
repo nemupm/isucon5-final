@@ -8,4 +8,8 @@ go get "github.com/gorilla/mux"
 go get "github.com/gorilla/sessions"
 go get  "github.com/lib/pq"
 go build -o app
+sudo supervisorctl stop golang
 cp app ~/webapp/golang/app
+sudo /etc/supervisor/conf.d/golang
+sudo supervisorctl reread
+sudo supervisorctl start golang
