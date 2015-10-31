@@ -252,7 +252,7 @@ func PostModify(w http.ResponseWriter, r *http.Request) {
 	paramValue := r.FormValue("param_value")
 
 	selectQuery := `SELECT ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked FROM subscriptions2 WHERE user_id=$1 FOR UPDATE`
-	updateQuery := `UPDATE subscriptions2 SET ken=$1, ken2=$2, surname=$3, givenname=$4, tenki=$5 perfectsec_req=$6, perfectsec_token=$7, perfectsec_attacked=$8 WHERE user_id=$9`
+	updateQuery := `UPDATE subscriptions2 SET ken=$1, ken2=$2, surname=$3, givenname=$4, tenki=$5, perfectsec_req=$6, perfectsec_token=$7, perfectsec_attacked=$8 WHERE user_id=$9`
 
 	tx, err := db.Begin()
 	checkErr(err)
