@@ -29,3 +29,15 @@ CREATE TABLE subscriptions (
   user_id INTEGER REFERENCES users (id) NOT NULL PRIMARY KEY,
   arg TEXT
 );
+
+CREATE TABLE subscriptions2 (
+  user_id INTEGER NOT NULL PRIMARY KEY,
+  ken VARCHAR(64),
+  ken2 VARCHAR(64),
+  surname VARCHAR(64),
+  givenname VARCHAR(64),
+  tenki VARCHAR(64),
+  perfectsec_req VARCHAR(64),
+  perfectsec_token VARCHAR(64),
+  perfectsec_attacked VARCHAR(64)
+);

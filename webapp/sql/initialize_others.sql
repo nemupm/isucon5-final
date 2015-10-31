@@ -10,7 +10,7 @@ VALUES
 ('perfectsec', 'GET', 'header', 'X-PERFECT-SECURITY-TOKEN', 'https://api.five-final.isucon.net:8443/tokens'),
 ('perfectsec_attacked', 'GET', 'header', 'X-PERFECT-SECURITY-TOKEN', 'https://api.five-final.isucon.net:8443/attacked_list');
 
-TRUNCATE users, subscriptions;
+TRUNCATE users, subscriptions2;
 
 INSERT INTO users (id, email, salt, passhash, grade) VALUES
 (1, 'cecile.legros1@isucon.net', 'yb77gncu', digest('yb77gncu' || 'cecile.legros1', 'sha512'), 'standard'),
