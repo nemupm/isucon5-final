@@ -344,7 +344,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked := "", "", "", "", "", "", "", ""
 	//var ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked string
 	row := db.QueryRow(`SELECT ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked FROM subscriptions2 WHERE user_id=$1`, user.ID)
-	checkErr(row.Scan(&ken, &ken2, &surname, &givenname, &tenki, &perfectsec_req, &perfectsec_token, &perfectsec_attacked))
+	checkErr(row.Scan(ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked))
 
 	var usedServices = []string{}
 	var services = []string{"ken", "ken2", "surname", "givenname", "tenki", "perfectsec", "perfectsec_attacked"}
