@@ -15,11 +15,11 @@ lines.each_with_index do |l|
   print "#{id},"
   json = JSON.parse(l[l.index(",")+3..l.size-4])
 
-  ken       = json['ken'] ? json['ken']['keys'].first : nil
-  ken2      = json['ken2'] ? json['ken2']['params']['zipcode'] : nil
+  ken       = json['ken'] ? "\"" + json['ken']['keys'].first + "\"" : nil
+  ken2      = json['ken2'] ? "\"" + json['ken2']['params']['zipcode'] + "\"" : nil
   surname   = json['surname'] ? "\"" + json['surname']['params']['q'] + "\"" : nil
   givenname = json['givenname'] ? "\"" + json['givenname']['params']['q'] + "\"" : nil
-  tenki     = json['tenki'] ? json['tenki']['token'] : nil
+  tenki     = json['tenki'] ? "\"" + json['tenki']['token'] + "\"" : nil
   if json['perfectsec']
 	perfectsec_req   = "\"" + json['perfectsec']['params']['req'] + "\""
 	perfectsec_token = "\"" + json['perfectsec']['token'] + "\""
