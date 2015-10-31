@@ -7,7 +7,7 @@ new_filename = "initialize_subscription.sql"
 
 `rm -f #{new_filename}`
 File.open(new_filename, 'w') do |f|
-  f.puts "INSERT INTO subscriptions (user_id, ken, ken2, surname, givenname, tenki) VALUES"
+  f.puts "INSERT INTO subscriptions (user_id, ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked) VALUES"
 end
 lines = File.read(raw_filename).split("\n")[10019,10000]
 lines.each_with_index do |l|
@@ -15,7 +15,18 @@ lines.each_with_index do |l|
   print "#{id},"
   json = JSON.parse(l[l.index(",")+3..l.size-4])
 
+  ken       = json['ken'] ? json['ken']['keys'].first : nil
+  ken2      = json['ken2'] ? json['ken2']['params']['zipcode'] : nil
+  surname   = json['surname'] ? "\"" + json['surname']['params']['q'] + "\"" : nil
+  givenname = json['givenname'] ? "\"" + json['givenname']['params']['q'] + "\"" : nil
+  tenki     = json['tenki'] ? json['tenki']['token'] : nil
+  if json['perfectsec']
+	perfectsec_req   = "\"" + json['perfectsec']['params']['req'] + "\""
+	perfectsec_token = "\"" + json['perfectsec']['token'] + "\""
+  end
+  perfectsec_attacked = json['perfectsec_attacked'] ? "\"" + json['perfectsec_attacked']['token'] + "\"" : nil
+
   File.open(new_filename, 'a') do |f|
-    f.puts "(#{id}, #{json['ken'] ? json['ken']['keys'].first : ''}, #{json['ken2'] ? json['ken2']['params']['zipcode'] : ''}, #{json['surname'] ? "\"" + json['surname']['params']['q'] + "\"" : ''}, #{json['givenname'] ? "\"" + json['givenname']['params']['q'] + "\"": ''}, #{json['tenki'] ? json['tenki']['token'] : ''})" + (id.to_i == lines.size ? ";" : ",")
+	  f.puts "(#{id}, #{ken ? ken : ""}, #{ken2 ? ken2 : ""}, #{surname ? surname : ""}, #{givenname ? givenname : ""}, #{tenki ? tenki : ""}, #{perfectsec_req ? perfectsec_req : ""}, #{perfectsec_token ? perfectsec_token : ""}, #{perfectsec_attacked ? perfectsec_attacked : ""})"
   end
 end
