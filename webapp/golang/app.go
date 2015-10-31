@@ -346,34 +346,82 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row := db.QueryRow(`SELECT arg FROM subscriptions WHERE user_id=$1`, user.ID)
-	var argJson string
-	checkErr(row.Scan(&argJson))
-	var arg Arg
-	checkErr(json.Unmarshal([]byte(argJson), &arg))
+	var ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked string
+	row := db.QueryRow(`SELECT ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked FROM subscriptions WHERE user_id=$1`, user.ID)
+	checkErr(row.Scan(&ken, &ken2, &surname, &givenname, &tenki, &perfectsec_req, &perfectsec_token, &perfectsec_attacked))
 
-	data := make([]Data, 0, len(arg))
-	for service, conf := range arg {
+	var usedServices = []string{}
+	var services = []string{"ken", "ken2", "surname", "givenname", "tenki", "perfectsec", "perfectsec_attacked"}
 
-		params := conf.Params
+	for eachService := range services {
+		switch eachService {
+		case "ken":
+			if ken != "" {
+				usedServices = append(usedServices, eachService)
+			}
+		case "ken2":
+			if ken2 != "" {
+				usedServices = append(usedServices, eachService)
+			}
+		case "surname":
+			if surname != "" {
+				usedServices = append(usedServices, eachService)
+			}
+		case "givenname":
+			if givenname != "" {
+				usedServices = append(usedServices, eachService)
+			}
+		case "tenki":
+			if tenki != "" {
+				usedServices = append(usedServices, eachService)
+			}
+		case "perfectsec":
+			if perfectsec_token != "" {
+				usedServices = append(usedServices, eachService)
+			}
+		case "perfectsec_attacked":
+			if perfectsec_attacked != "" {
+				usedServices = append(usedServices, eachService)
+			}
+		}
+	}
+
+	data := make([]Data, 0, len(usedServices))
+	for service, conf := range usedServices {
 
 		// ken : keys
 		// ken2: params zipcode
 		// surname: params q
 		// givenname: params q
 		// tenki: token
+
 		var serviceKey string
+		var params = make(map[string]string)
+		var token string
+
 		switch service {
 		case "ken":
-			for _, s := range conf.Keys {
-				serviceKey = s
-			}
+			serviceKey = ken
 		case "ken2":
-			serviceKey = params["zipcode"]
-		case "surname", "givenname":
-			serviceKey = params["q"]
+			// serviceKey = params["zipcode"]
+			serviceKey = ken2
+			params["zipcode"] = ken2
+		case "surname":
+			//serviceKey = params["q"]
+			serviceKey = surname
+			params["q"] = surname
+		case "givenname":
+			//serviceKey = params["q"]
+			serviceKey = givenname
+			params["q"] = givenname
 		case "tenki":
-			serviceKey = conf.Token
+			//serviceKey = conf.Token
+			serviceKey = tenki
+			params["zipcode"] = tenki
+		case "perfectsec":
+			token = perfectsec_token
+		case "perfectsec_attacked":
+			token = perfectsec_attacked_token
 		}
 
 		var flg = 0
@@ -403,19 +451,20 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 			if tokenType != "" && tokenKey != "" {
 				switch tokenType {
 				case "header":
-					headers[tokenKey] = conf.Token
-					break
-				case "param":
-					params[tokenKey] = conf.Token
-					break
+					headers[tokenKey] = token
+					// 	break
+					// case "param":
+					// 	params[tokenKey] = conf.Token
+					// 	break
 				}
 			}
 
-			ks := make([]interface{}, len(conf.Keys))
-			for i, s := range conf.Keys {
-				ks[i] = s
+			var uri string
+			if service != "ken" {
+				uri := uriTemplate + ken
+			} else {
+				uri := uriTemplate
 			}
-			uri := fmt.Sprintf(uriTemplate, ks...)
 
 			data = append(data, Data{service, fetchApi(method, uri, headers, params, service, serviceKey)})
 		}
@@ -507,7 +556,7 @@ func main() {
 	endpoints["ken"]["method"] = "GET"
 	endpoints["ken"]["tokenType"] = ""
 	endpoints["ken"]["tokenKey"] = ""
-	endpoints["ken"]["uri"] = "http://api.five-final.isucon.net:8080/%s"
+	endpoints["ken"]["uri"] = "http://api.five-final.isucon.net:8080/"
 
 	endpoints["ken2"] = make(map[string]string)
 	endpoints["ken2"]["method"] = "GET"
@@ -578,14 +627,14 @@ func main() {
 	os.Remove(sock)
 	ll, err := net.Listen("unix", sock)
 	if err != nil {
-		fmt.Println("%s\n", err);
+		fmt.Println("%s\n", err)
 		return
 	}
 	os.Chmod(sock, 0777)
 
-	sigc := make(chan os.Signal, 1);
+	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, os.Interrupt, os.Kill, syscall.SIGTERM)
-	go func(c chan os.Signal){
+	go func(c chan os.Signal) {
 		sig := <-c
 		log.Printf("Caught signal %s: shutting down", sig)
 		ll.Close()
