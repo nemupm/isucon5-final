@@ -41,6 +41,17 @@ type User struct {
 	Grade string
 }
 
+type Subscription struct {
+	Ken				string
+	Ken2               string
+	Surname            string
+	Givenname          string
+	Tenki              string
+	PerfectSecReq         string
+	PerfectSecToken string
+	PerfectSecAttacked string
+}
+
 type Arg map[string]*Service
 
 type Service struct {
@@ -240,14 +251,14 @@ func PostModify(w http.ResponseWriter, r *http.Request) {
 	//paramName := r.FormValue("param_name")
 	paramValue := r.FormValue("param_value")
 
-	selectQuery := `SELECT ken, ken2, surname, givenname, tenki, FROM subscriptions2 WHERE user_id=$1 FOR UPDATE`
-	updateQuery := `UPDATE subscriptions2 SET ken=$1, ken2=$2, surname=$3, givenname=$4, tenki=$5 WHERE user_id=$6`
+	selectQuery := `SELECT ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked FROM subscriptions2 WHERE user_id=$1 FOR UPDATE`
+	updateQuery := `UPDATE subscriptions2 SET ken=$1, ken2=$2, surname=$3, givenname=$4, tenki=$5 perfectsec_req=$6, perfectsec_token=$7, perfectsec_attacked=$8 WHERE user_id=$9`
 
 	tx, err := db.Begin()
 	checkErr(err)
 	row := tx.QueryRow(selectQuery, user.ID)
-	ken, ken2, surname, givenname, tenki := "", "", "", "", ""
-	err = row.Scan(&ken, &ken2, &surname, &givenname, &tenki)
+	subscription := Subscription{}
+	err = row.Scan(&subscription.Ken, &subscription.Ken2, &subscription.Surname, &subscription.Givenname, &subscription.Tenki, &subscription.PerfectSecReq, &subscription.PerfectSecToken, &subscription.PerfectSecAttacked)
 	if err == sql.ErrNoRows {
 	} else if err != nil {
 		tx.Rollback()
@@ -256,18 +267,23 @@ func PostModify(w http.ResponseWriter, r *http.Request) {
 
 	switch service {
 	case "ken":
-		ken = keys[0]
+		subscription.Ken = keys[0]
 	case "ken2":
-		ken2 = paramValue
+		subscription.Ken2 = paramValue
 	case "surname":
-		surname = paramValue
+		subscription.Surname = paramValue
 	case "givenname":
-		givenname = paramValue
+		subscription.Givenname = paramValue
 	case "tenki":
-		tenki = token
+		subscription.Tenki = token
+	case "perfectsec":
+		subscription.PerfectSecReq = paramValue
+		subscription.PerfectSecToken	= token
+	case "perfectsec_attacked":
+	   subscription.PerfectSecAttacked	= token
 	}
 
-	_, err = tx.Exec(updateQuery, ken, ken2, surname, givenname, tenki, user.ID)
+	_, err = tx.Exec(updateQuery, subscription.Ken, subscription.Ken2, subscription.Surname, subscription.Givenname, subscription.Tenki, subscription.PerfectSecReq, subscription.PerfectSecToken, subscription.PerfectSecAttacked, user.ID)
 	checkErr(err)
 
 	tx.Commit()
