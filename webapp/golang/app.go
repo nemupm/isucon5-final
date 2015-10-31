@@ -323,17 +323,19 @@ func fetchApi(method, uri string, headers, params map[string]string, service str
 	d.UseNumber()
 	checkErr(d.Decode(&data))
 
-	_, exist := apidata[service]
-	if !exist {
-		apidata[service] = make(map[string]map[string]interface{})
-		apidata[service][key] = make(map[string]interface{})
-		apidata[service][key] = data
-	}
+	if service != "tenki" || service != "perfectsec" || service != "perfectsec_attacked" {
+		_, exist := apidata[service]
+		if !exist {
+			apidata[service] = make(map[string]map[string]interface{})
+			apidata[service][key] = make(map[string]interface{})
+			apidata[service][key] = data
+		}
 
-	_, exist = apidata[service][key]
-	if !exist {
-		apidata[service][key] = make(map[string]interface{})
-		apidata[service][key] = data
+		_, exist = apidata[service][key]
+		if !exist {
+			apidata[service][key] = make(map[string]interface{})
+			apidata[service][key] = data
+		}
 	}
 
 	return data
@@ -420,6 +422,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 			params["zipcode"] = tenki
 		case "perfectsec":
 			token = perfectsec_token
+			params["req"] = perfectsec_req
 		case "perfectsec_attacked":
 			token = perfectsec_attacked_token
 		}
