@@ -377,10 +377,16 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetInitialize(w http.ResponseWriter, r *http.Request) {
-	fname := "../sql/initialize.sql"
+	fname := "../sql/initialize_others.sql"
+	fname2 := "../sql/initialize_subscription.sql"
 	file, err := filepath.Abs(fname)
 	checkErr(err)
 	_, err = exec.Command("psql", "-f", file, "isucon5f").Output()
+	checkErr(err)
+
+	file2, err := filepath.Abs(fname2)
+	checkErr(err)
+	_, err = exec.Command("psql", "-f", file2, "isucon5f").Output()
 	checkErr(err)
 
 	resp2, err := http.Get("http://203.104.208.244/initalize")
