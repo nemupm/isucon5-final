@@ -357,10 +357,10 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked := "", "", "", "", "", "", "", ""
+	subscription := Subscription{}
 	//var ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked string
 	row := db.QueryRow(`SELECT ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked FROM subscriptions2 WHERE user_id=$1`, user.ID)
-	checkErr(row.Scan(&ken, &ken2, &surname, &givenname, &tenki, &perfectsec_req, &perfectsec_token, &perfectsec_attacked))
+	checkErr(row.Scan(&subscription.Ken, &subscription.Ken2, &subscription.Surname, &subscription.Givenname, &subscription.Tenki, &subscription.PerfectSecReq, &subscription.PerfectSecToken, &subscription.PerfectSecAttacked))
 
 	var usedServices = []string{}
 	var services = []string{"ken", "ken2", "surname", "givenname", "tenki", "perfectsec", "perfectsec_attacked"}
@@ -368,31 +368,31 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	for _, eachService := range services {
 		switch eachService {
 		case "ken":
-			if ken != "" {
+			if subscription.Ken != "" {
 				usedServices = append(usedServices, eachService)
 			}
 		case "ken2":
-			if ken2 != "" {
+			if subscription.Ken2 != "" {
 				usedServices = append(usedServices, eachService)
 			}
 		case "surname":
-			if surname != "" {
+			if subscription.Surname != "" {
 				usedServices = append(usedServices, eachService)
 			}
 		case "givenname":
-			if givenname != "" {
+			if subscription.Givenname != "" {
 				usedServices = append(usedServices, eachService)
 			}
 		case "tenki":
-			if tenki != "" {
+			if subscription.Tenki != "" {
 				usedServices = append(usedServices, eachService)
 			}
 		case "perfectsec":
-			if perfectsec_token != "" {
+			if subscription.PerfectSecToken != "" {
 				usedServices = append(usedServices, eachService)
 			}
 		case "perfectsec_attacked":
-			if perfectsec_attacked != "" {
+			if subscription.PerfectSecAttacked != "" {
 				usedServices = append(usedServices, eachService)
 			}
 		}
@@ -413,28 +413,28 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 
 		switch service {
 		case "ken":
-			serviceKey = ken
+			serviceKey = subscription.Ken
 		case "ken2":
 			// serviceKey = params["zipcode"]
-			serviceKey = ken2
-			params["zipcode"] = ken2
+			serviceKey = subscription.Ken2
+			params["zipcode"] = subscription.Ken2
 		case "surname":
 			//serviceKey = params["q"]
-			serviceKey = surname
-			params["q"] = surname
+			serviceKey = subscription.Surname
+			params["q"] = subscription.Surname
 		case "givenname":
 			//serviceKey = params["q"]
-			serviceKey = givenname
-			params["q"] = givenname
+			serviceKey = subscription.Givenname
+			params["q"] = subscription.Givenname
 		case "tenki":
 			//serviceKey = conf.Token
-			serviceKey = tenki
-			params["zipcode"] = tenki
+			serviceKey = subscription.Tenki
+			params["zipcode"] = subscription.Tenki
 		case "perfectsec":
-			token = perfectsec_token
-			params["req"] = perfectsec_req
+			token = subscription.PerfectSecReq
+			params["req"] = subscription.PerfectSecReq
 		case "perfectsec_attacked":
-			token = perfectsec_attacked
+			token = subscription.PerfectSecAttacked
 		}
 
 		var flg = 0
@@ -474,7 +474,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 
 			var uri string
 			if service != "ken" {
-				uri = uriTemplate + ken
+				uri = uriTemplate + subscription.Ken
 			} else {
 				uri = uriTemplate
 			}
