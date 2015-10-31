@@ -1,4 +1,4 @@
-INSERT INTO subscriptions (user_id, ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked) VALUES
+INSERT INTO subscriptions2 (user_id, ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked) VALUES
 (1, "9593941", "4928178", "海老", "さくのじょう", "9593941", , , )
 (2, "3360912", "6340033", "ながうえ", "あけよ", , , , )
 (3, "0611405", "0180725", "こし", , , , , )
