@@ -194,7 +194,15 @@ func GetUserJs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to login.", http.StatusForbidden)
 		return
 	}
-	render(w, r, http.StatusOK, "user.js", struct{ Grade string }{getCurrentUser(w, r).Grade})
+	grade := getCurrentUser(w, r).Grade
+	switch grade {
+	case "micro","small":
+		render(w, r, http.StatusOK, "user_small.js", nil)
+	case "standard":
+		render(w, r, http.StatusOK, "user_standard.js", nil)
+	case "premium":
+		render(w, r, http.StatusOK, "user_premium.js", nil)
+	}
 }
 
 func GetModify(w http.ResponseWriter, r *http.Request) {
