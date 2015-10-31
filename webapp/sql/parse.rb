@@ -27,6 +27,6 @@ lines.each_with_index do |l|
   perfectsec_attacked = json['perfectsec_attacked'] ? "\"" + json['perfectsec_attacked']['token'] + "\"" : nil
 
   File.open(new_filename, 'a') do |f|
-	  f.puts "(#{id}, #{ken ? ken : ""}, #{ken2 ? ken2 : ""}, #{surname ? surname : ""}, #{givenname ? givenname : ""}, #{tenki ? tenki : ""}, #{perfectsec_req ? perfectsec_req : ""}, #{perfectsec_token ? perfectsec_token : ""}, #{perfectsec_attacked ? perfectsec_attacked : ""})"
+	  f.puts "(#{id}, #{ken ? ken : "\"\""}, #{ken2 ? ken2 : "\"\""}, #{surname ? surname : "\"\""}, #{givenname ? givenname : "\"\""}, #{tenki ? tenki : "\"\""}, #{perfectsec_req ? perfectsec_req : "\"\""}, #{perfectsec_token ? perfectsec_token : "\"\""}, #{perfectsec_attacked ? perfectsec_attacked : "\"\""})"
   end
 end
