@@ -196,7 +196,7 @@ func GetUserJs(w http.ResponseWriter, r *http.Request) {
 	}
 	grade := getCurrentUser(w, r).Grade
 	switch grade {
-	case "micro","small":
+	case "micro", "small":
 		render(w, r, http.StatusOK, "user_small.js", nil)
 	case "standard":
 		render(w, r, http.StatusOK, "user_standard.js", nil)
@@ -237,7 +237,7 @@ func PostModify(w http.ResponseWriter, r *http.Request) {
 	if keysStr != "" {
 		keys = regexp.MustCompile("\\s+").Split(keysStr, -1)
 	}
-	paramName := r.FormValue("param_name")
+	//paramName := r.FormValue("param_name")
 	paramValue := r.FormValue("param_value")
 
 	selectQuery := `SELECT ken, ken2, surname, givenname, tenki, FROM subscriptions WHERE user_id=$1 FOR UPDATE`
@@ -457,9 +457,9 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 
 			var uri string
 			if service != "ken" {
-				uri := uriTemplate + ken
+				uri = uriTemplate + ken
 			} else {
-				uri := uriTemplate
+				uri = uriTemplate
 			}
 
 			data = append(data, Data{service, fetchApi(method, uri, headers, params, service, serviceKey)})
