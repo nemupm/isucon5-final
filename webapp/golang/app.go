@@ -25,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 )
 
 var (
@@ -381,6 +382,11 @@ func GetInitialize(w http.ResponseWriter, r *http.Request) {
 	checkErr(err)
 	_, err = exec.Command("psql", "-f", file, "isucon5f").Output()
 	checkErr(err)
+
+	resp2, err := http.Get("http://example.com/")
+	checkErr(err)
+	defer resp2.Body.Close()
+	time.Sleep(5)
 }
 
 func main() {
