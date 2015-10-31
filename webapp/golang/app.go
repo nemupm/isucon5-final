@@ -12,6 +12,7 @@ import (
 	"html/template"
 	"log"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -23,6 +24,7 @@ import (
 	"runtime/pprof"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 var (
@@ -466,7 +468,29 @@ func main() {
 
 	r.HandleFunc("/", GetIndex)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../static")))
-	log.Fatal(http.ListenAndServe(":8080", r))
+
+	sock := "/dev/shm/app.sock"
+	os.Remove(sock)
+	ll, err := net.Listen("unix", sock)
+	if err != nil {
+		fmt.Println("%s\n", err);
+		return
+	}
+	os.Chmod(sock, 0777)
+
+	sigc := make(chan os.Signal, 1);
+	signal.Notify(sigc, os.Interrupt, os.Kill, syscall.SIGTERM)
+	go func(c chan os.Signal){
+		sig := <-c
+		log.Printf("Caught signal %s: shutting down", sig)
+		ll.Close()
+		os.Exit(0)
+	}(sigc)
+
+	err = http.Serve(ll, r)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func checkErr(err error) {
