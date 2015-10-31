@@ -136,7 +136,7 @@ func PostSignUp(w http.ResponseWriter, r *http.Request) {
 	grade := r.FormValue("grade")
 	salt := generateSalt()
 	insertUserQuery := `INSERT INTO users (email,salt,passhash,grade) VALUES ($1,$2,digest($3 || $4, 'sha512'),$5) RETURNING id`
-	insertSubscriptionQuery := `INSERT INTO subscriptions (user_id,arg) VALUES ($1,$2)`
+	insertSubscriptionQuery := `INSERT INTO subscriptions user_id, VALUES $1`
 	tx, err := db.Begin()
 	checkErr(err)
 	row := tx.QueryRow(insertUserQuery, email, salt, salt, passwd, grade)
@@ -147,7 +147,7 @@ func PostSignUp(w http.ResponseWriter, r *http.Request) {
 		tx.Rollback()
 		checkErr(err)
 	}
-	_, err = tx.Exec(insertSubscriptionQuery, userId, "{}")
+	_, err = tx.Exec(insertSubscriptionQuery, userId)
 	if err != nil {
 		tx.Rollback()
 		checkErr(err)
@@ -203,12 +203,12 @@ func GetModify(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to login.", http.StatusForbidden)
 		return
 	}
-	row := db.QueryRow(`SELECT arg FROM subscriptions WHERE user_id=$1`, user.ID)
+	// row := db.QueryRow(`SELECT arg FROM subscriptions WHERE user_id=$1`, user.ID)
 	var arg string
-	err := row.Scan(&arg)
-	if err == sql.ErrNoRows {
-		arg = "{}"
-	}
+	// err := row.Scan(&arg)
+	// if err == sql.ErrNoRows {
+	arg = "{}"
+	// }
 	render(w, r, http.StatusOK, "modify.html", struct {
 		User User
 		Arg  string
@@ -232,49 +232,34 @@ func PostModify(w http.ResponseWriter, r *http.Request) {
 	paramName := r.FormValue("param_name")
 	paramValue := r.FormValue("param_value")
 
-	selectQuery := `SELECT arg FROM subscriptions WHERE user_id=$1 FOR UPDATE`
-	updateQuery := `UPDATE subscriptions SET arg=$1 WHERE user_id=$2`
+	selectQuery := `SELECT ken, ken2, surname, givenname, tenki, FROM subscriptions WHERE user_id=$1 FOR UPDATE`
+	updateQuery := `UPDATE subscriptions SET ken=$1, ken2=$2, surname=$3, givenname=$4, tenki=$5 WHERE user_id=$6`
 
 	tx, err := db.Begin()
 	checkErr(err)
 	row := tx.QueryRow(selectQuery, user.ID)
-	var jsonStr string
-	err = row.Scan(&jsonStr)
+	ken, ken2, surname, givenname, tenki := "", "", "", "", ""
+	err = row.Scan(&ken, &ken2, &surname, &givenname, &tenki)
 	if err == sql.ErrNoRows {
-		jsonStr = "{}"
 	} else if err != nil {
 		tx.Rollback()
 		checkErr(err)
 	}
-	var arg Arg
-	err = json.Unmarshal([]byte(jsonStr), &arg)
-	if err != nil {
-		tx.Rollback()
-		checkErr(err)
+
+	switch service {
+	case "ken":
+		ken = keys[0]
+	case "ken2":
+		ken2 = paramValue
+	case "surname":
+		surname = paramValue
+	case "givenname":
+		givenname = paramValue
+	case "tenki":
+		tenki = token
 	}
 
-	if _, ok := arg[service]; !ok {
-		arg[service] = &Service{}
-	}
-	if token != "" {
-		arg[service].Token = token
-	}
-	if len(keys) > 0 {
-		arg[service].Keys = keys
-	}
-	if arg[service].Params == nil {
-		arg[service].Params = make(map[string]string)
-	}
-	if paramName != "" && paramValue != "" {
-		arg[service].Params[paramName] = paramValue
-	}
-
-	b, err := json.Marshal(arg)
-	if err != nil {
-		tx.Rollback()
-		checkErr(err)
-	}
-	_, err = tx.Exec(updateQuery, string(b), user.ID)
+	_, err = tx.Exec(updateQuery, ken, ken2, surname, givenname, tenki, user.ID)
 	checkErr(err)
 
 	tx.Commit()
@@ -355,7 +340,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	var usedServices = []string{}
 	var services = []string{"ken", "ken2", "surname", "givenname", "tenki", "perfectsec", "perfectsec_attacked"}
 
-	for eachService := range services {
+	for _, eachService := range services {
 		switch eachService {
 		case "ken":
 			if ken != "" {
@@ -389,7 +374,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := make([]Data, 0, len(usedServices))
-	for service, conf := range usedServices {
+	for _, service := range usedServices {
 
 		// ken : keys
 		// ken2: params zipcode
@@ -424,7 +409,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 			token = perfectsec_token
 			params["req"] = perfectsec_req
 		case "perfectsec_attacked":
-			token = perfectsec_attacked_token
+			token = perfectsec_attacked
 		}
 
 		var flg = 0
