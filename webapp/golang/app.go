@@ -136,7 +136,7 @@ func PostSignUp(w http.ResponseWriter, r *http.Request) {
 	grade := r.FormValue("grade")
 	salt := generateSalt()
 	insertUserQuery := `INSERT INTO users (email,salt,passhash,grade) VALUES ($1,$2,digest($3 || $4, 'sha512'),$5) RETURNING id`
-	insertSubscriptionQuery := `INSERT INTO subscriptions user_id, VALUES $1`
+	insertSubscriptionQuery := `INSERT INTO subscriptions2 user_id, VALUES $1`
 	tx, err := db.Begin()
 	checkErr(err)
 	row := tx.QueryRow(insertUserQuery, email, salt, salt, passwd, grade)
@@ -240,8 +240,8 @@ func PostModify(w http.ResponseWriter, r *http.Request) {
 	//paramName := r.FormValue("param_name")
 	paramValue := r.FormValue("param_value")
 
-	selectQuery := `SELECT ken, ken2, surname, givenname, tenki, FROM subscriptions WHERE user_id=$1 FOR UPDATE`
-	updateQuery := `UPDATE subscriptions SET ken=$1, ken2=$2, surname=$3, givenname=$4, tenki=$5 WHERE user_id=$6`
+	selectQuery := `SELECT ken, ken2, surname, givenname, tenki, FROM subscriptions2 WHERE user_id=$1 FOR UPDATE`
+	updateQuery := `UPDATE subscriptions2 SET ken=$1, ken2=$2, surname=$3, givenname=$4, tenki=$5 WHERE user_id=$6`
 
 	tx, err := db.Begin()
 	checkErr(err)
@@ -342,7 +342,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked string
-	row := db.QueryRow(`SELECT ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked FROM subscriptions WHERE user_id=$1`, user.ID)
+	row := db.QueryRow(`SELECT ken, ken2, surname, givenname, tenki, perfectsec_req, perfectsec_token, perfectsec_attacked FROM subscriptions2 WHERE user_id=$1`, user.ID)
 	checkErr(row.Scan(&ken, &ken2, &surname, &givenname, &tenki, &perfectsec_req, &perfectsec_token, &perfectsec_attacked))
 
 	var usedServices = []string{}
