@@ -29,8 +29,10 @@ import (
 )
 
 var (
-	db    *sql.DB
-	store *sessions.CookieStore
+	db        *sql.DB
+	store     *sessions.CookieStore
+	apidata   map[string]map[string]map[string]interface{}
+	endpoints map[string]map[string]string
 )
 
 type User struct {
@@ -280,7 +282,8 @@ func PostModify(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/modify", http.StatusSeeOther)
 }
 
-func fetchApi(method, uri string, headers, params map[string]string) map[string]interface{} {
+func fetchApi(method, uri string, headers, params map[string]string, service string, key string) map[string]interface{} {
+
 	client := &http.Client{}
 	if strings.HasPrefix(uri, "https://") {
 		tr := &http.Transport{
@@ -319,6 +322,20 @@ func fetchApi(method, uri string, headers, params map[string]string) map[string]
 	d := json.NewDecoder(resp.Body)
 	d.UseNumber()
 	checkErr(d.Decode(&data))
+
+	_, exist := apidata[service]
+	if !exist {
+		apidata[service] = make(map[string]map[string]interface{})
+		apidata[service][key] = make(map[string]interface{})
+		apidata[service][key] = data
+	}
+
+	_, exist = apidata[service][key]
+	if !exist {
+		apidata[service][key] = make(map[string]interface{})
+		apidata[service][key] = data
+	}
+
 	return data
 }
 
@@ -337,37 +354,71 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 
 	data := make([]Data, 0, len(arg))
 	for service, conf := range arg {
-		row := db.QueryRow(`SELECT meth, token_type, token_key, uri FROM endpoints WHERE service=$1`, service)
-		var method string
-		var tokenType *string
-		var tokenKey *string
-		var uriTemplate *string
-		checkErr(row.Scan(&method, &tokenType, &tokenKey, &uriTemplate))
 
-		headers := make(map[string]string)
 		params := conf.Params
-		if params == nil {
-			params = make(map[string]string)
+
+		// ken : keys
+		// ken2: params zipcode
+		// surname: params q
+		// givenname: params q
+		// tenki: token
+		var serviceKey string
+		switch service {
+		case "ken":
+			for _, s := range conf.Keys {
+				serviceKey = s
+			}
+		case "ken2":
+			serviceKey = params["zipcode"]
+		case "surname", "givenname":
+			serviceKey = params["q"]
+		case "tenki":
+			serviceKey = conf.Token
 		}
 
-		if tokenType != nil && tokenKey != nil {
-			switch *tokenType {
-			case "header":
-				headers[*tokenKey] = conf.Token
-				break
-			case "param":
-				params[*tokenKey] = conf.Token
-				break
+		var flg = 0
+		_, exist := apidata[service]
+
+		if exist {
+			_, exist = apidata[service][serviceKey]
+
+			if exist {
+				flg = 1
+				serviceData, _ := apidata[service][serviceKey]
+				data = append(data, Data{service, serviceData})
 			}
 		}
 
-		ks := make([]interface{}, len(conf.Keys))
-		for i, s := range conf.Keys {
-			ks[i] = s
-		}
-		uri := fmt.Sprintf(*uriTemplate, ks...)
+		if flg == 0 {
+			method := endpoints[service]["method"]
+			tokenType := endpoints[service]["tokenType"]
+			tokenKey := endpoints[service]["tokenKey"]
+			uriTemplate := endpoints[service]["uri"]
 
-		data = append(data, Data{service, fetchApi(method, uri, headers, params)})
+			headers := make(map[string]string)
+			if params == nil {
+				params = make(map[string]string)
+			}
+
+			if tokenType != "" && tokenKey != "" {
+				switch tokenType {
+				case "header":
+					headers[tokenKey] = conf.Token
+					break
+				case "param":
+					params[tokenKey] = conf.Token
+					break
+				}
+			}
+
+			ks := make([]interface{}, len(conf.Keys))
+			for i, s := range conf.Keys {
+				ks[i] = s
+			}
+			uri := fmt.Sprintf(uriTemplate, ks...)
+
+			data = append(data, Data{service, fetchApi(method, uri, headers, params, service, serviceKey)})
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -440,6 +491,59 @@ func main() {
 		log.Fatalf("Failed to connect to DB: %s.", err.Error())
 	}
 	defer db.Close()
+
+	apidata = make(map[string]map[string]map[string]interface{})
+
+	// ken                 | GET  |            |                          | http://api.five-final.isucon.net:8080/%s
+	// ken2                | GET  |            |                          | http://api.five-final.isucon.net:8080/
+	// surname             | GET  |            |                          | http://api.five-final.isucon.net:8081/surname
+	// givenname           | GET  |            |                          | http://api.five-final.isucon.net:8081/givenname
+	// tenki               | GET  | param      | zipcode                  | http://api.five-final.isucon.net:8988/
+	// perfectsec          | GET  | header     | X-PERFECT-SECURITY-TOKEN | https://api.five-final.isucon.net:8443/tokens
+	// perfectsec_attacked | GET  | header     | X-PERFECT-SECURITY-TOKEN | https://api.five-final.isucon.net:8443/attacked_list
+	endpoints = make(map[string]map[string]string)
+
+	endpoints["ken"] = make(map[string]string)
+	endpoints["ken"]["method"] = "GET"
+	endpoints["ken"]["tokenType"] = ""
+	endpoints["ken"]["tokenKey"] = ""
+	endpoints["ken"]["uri"] = "http://api.five-final.isucon.net:8080/%s"
+
+	endpoints["ken2"] = make(map[string]string)
+	endpoints["ken2"]["method"] = "GET"
+	endpoints["ken2"]["tokenType"] = ""
+	endpoints["ken2"]["tokenKey"] = ""
+	endpoints["ken2"]["uri"] = "http://api.five-final.isucon.net:8080/"
+
+	endpoints["surname"] = make(map[string]string)
+	endpoints["surname"]["method"] = "GET"
+	endpoints["surname"]["tokenType"] = ""
+	endpoints["surname"]["tokenKey"] = ""
+	endpoints["surname"]["uri"] = "http://api.five-final.isucon.net:8081/surname"
+
+	endpoints["givenname"] = make(map[string]string)
+	endpoints["givenname"]["method"] = "GET"
+	endpoints["givenname"]["tokenType"] = ""
+	endpoints["givenname"]["tokenKey"] = ""
+	endpoints["givenname"]["uri"] = "http://api.five-final.isucon.net:8081/givenname"
+
+	endpoints["tenki"] = make(map[string]string)
+	endpoints["tenki"]["method"] = "GET"
+	endpoints["tenki"]["tokenType"] = "param"
+	endpoints["tenki"]["tokenKey"] = "zipcode"
+	endpoints["tenki"]["uri"] = "http://api.five-final.isucon.net:8988/"
+
+	endpoints["perfectsec"] = make(map[string]string)
+	endpoints["perfectsec"]["method"] = "GET"
+	endpoints["perfectsec"]["tokenType"] = "header"
+	endpoints["perfectsec"]["tokenKey"] = "X-PERFECT-SECURITY-TOKEN"
+	endpoints["perfectsec"]["uri"] = "https://api.five-final.isucon.net:8443/tokens"
+
+	endpoints["perfectsec_attacked"] = make(map[string]string)
+	endpoints["perfectsec_attacked"]["method"] = "GET"
+	endpoints["perfectsec_attacked"]["tokenType"] = "header"
+	endpoints["perfectsec_attacked"]["tokenKey"] = "X-PERFECT-SECURITY-TOKEN"
+	endpoints["perfectsec_attacked"]["uri"] = "https://api.five-final.isucon.net:8443/attacked_list"
 
 	store = sessions.NewCookieStore([]byte(ssecret))
 
