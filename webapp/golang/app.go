@@ -42,13 +42,13 @@ type User struct {
 }
 
 type Subscription struct {
-	Ken				string
+	Ken                string
 	Ken2               string
 	Surname            string
 	Givenname          string
 	Tenki              string
-	PerfectSecReq         string
-	PerfectSecToken string
+	PerfectSecReq      string
+	PerfectSecToken    string
 	PerfectSecAttacked string
 }
 
@@ -278,9 +278,9 @@ func PostModify(w http.ResponseWriter, r *http.Request) {
 		subscription.Tenki = token
 	case "perfectsec":
 		subscription.PerfectSecReq = paramValue
-		subscription.PerfectSecToken	= token
+		subscription.PerfectSecToken = token
 	case "perfectsec_attacked":
-	   subscription.PerfectSecAttacked	= token
+		subscription.PerfectSecAttacked = token
 	}
 
 	_, err = tx.Exec(updateQuery, subscription.Ken, subscription.Ken2, subscription.Surname, subscription.Givenname, subscription.Tenki, subscription.PerfectSecReq, subscription.PerfectSecToken, subscription.PerfectSecAttacked, user.ID)
@@ -473,7 +473,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 			}
 
 			var uri string
-			if service != "ken" {
+			if service == "ken" {
 				uri = uriTemplate + subscription.Ken
 			} else {
 				uri = uriTemplate
